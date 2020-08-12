@@ -36,7 +36,7 @@ df['ingedients_vector'] = countvector.tolist()
 # tfidf_transformer = TfidfTransformer()
 # X_tfidf = tfidf_transformer.fit_transform(X_count)
 # df['ingedients_tfidf_vector'] = X_tfidf.toarray().tolist()
-# ingredients = vectorizer.get_feature_names()
+ingredients = vectorizer.get_feature_names()
 
 # Cooking Steps
 df['cooking_steps_all'] = df['cooking_steps'].apply(lambda x: " ".join(ast.literal_eval(x)))
@@ -86,7 +86,8 @@ print("Accuracy:", accuracy)
 
 # Save the model to disk
 joblib.dump(rf, 'classifier.joblib')
-
+joblib.dump(vectorizer, 'vectorizer.joblib')
+joblib.dump(tfidf_vectorizer, 'tfidf_vectorizer.joblib')
 
 
 

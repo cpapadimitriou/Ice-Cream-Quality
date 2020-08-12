@@ -3,6 +3,8 @@ from flask_restplus import Api, Resource, fields
 from sklearn.externals import joblib
 import numpy as np
 import sys
+import pandas as pd
+from src.util import clean_text, lemmatize_text, tfidf
 
 flask_app = Flask(__name__)
 app = Api(app = flask_app, 
@@ -21,6 +23,8 @@ model = app.model('Prediction params',
     					  				 	help="Ingredients cannot be blank")})
 
 classifier = joblib.load('classifier.joblib')
+vectorizer = joblib.load('vectorizer.joblib')
+tfidf_vectorizer = joblib.load('tfidf_vectorizer.joblib')
 
 @name_space.route("/")
 class MainClass(Resource):
@@ -36,8 +40,14 @@ class MainClass(Resource):
 	def post(self):
 		try: 
 			formData = request.json
-			data = [val for val in formData.values()]
-			prediction = classifier.predict(np.array(data).reshape(1, -1))
+			ingredients = [x.strip() for x in formData['ingredients'].split(',')]
+			X_count = vectorizer.transform(ingredients)
+			countvector = X_count.toarray().astype(int)
+			x_ingredients = np.array([sum(x) for x in zip(*countvector)])
+			cooking_steps = lemmatize_text(clean_text(formData['cookingSteps']))
+			x_cooking = tfidf_vectorizer.transform([cooking_steps]).toarray()[0]
+			x = np.concatenate([x_ingredients, x_cooking])
+			prediction = classifier.predict(x.reshape(1, -1))
 			types = { 0: "Bad Recipe", 1: "Good Recipe"}
 			response = jsonify({
 				"statusCode": 200,
